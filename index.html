@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muzlatgich Boshqaruv Tizimi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Muzlatgich Boshqaruv Tizimi</h1>
+
+    <!-- Tabs -->
+    <div class="flex flex-wrap border-b border-gray-200 mb-6">
+      <button onclick="showTab('clients')" class="tab-button px-4 py-2 font-medium text-gray-600 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500 transition">Mijozlar</button>
+      <button onclick="showTab('debtors')" class="tab-button px-4 py-2 font-medium text-gray-600 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500 transition">Qarzdorlar</button>
+      <button onclick="showTab('archive')" class="tab-button px-4 py-2 font-medium text-gray-600 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500 transition">Arxiv</button>
+      <button onclick="showTab('my-debts')" class="tab-button px-4 py-2 font-medium text-gray-600 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500 transition">Mening qarzlarim</button>
+      <button onclick="showTab('stats')" class="tab-button px-4 py-2 font-medium text-gray-600 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500 transition">Statistika</button>
+      <button onclick="showTab('config')" class="tab-button px-4 py-2 font-medium text-gray-600 hover:text-primary-600 border-b-2 border-transparent hover:border-primary-500 transition">Sozlamalar</button>
+    </div>
+
+    <!-- Tab Contents -->
+    <div id="clients" class="tab-content">
+      <div class="flex flex-wrap gap-4 mb-6">
+        <button onclick="openModal('add-client-modal')" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="M12 5v14"></path>
+          </svg>
+          Mijoz qo'shish
+        </button>
+        <input id="client-search" type="text" placeholder="Ism, familiya yoki telefon bo'yicha qidirish" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80">
+      </div>
+      <div id="clients-table" class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded-lg shadow">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ism-familiya</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahsulot</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Miqdori</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Xona</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sana</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
+            </tr>
+          </thead>
+          <tbody id="clients-table-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="debtors" class="tab-content hidden">
+      <div id="debtors-table" class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded-lg shadow">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ism-familiya</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qarz</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
+            </tr>
+          </thead>
+          <tbody id="debtors-table-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="archive" class="tab-content hidden">
+      <div class="flex flex-wrap gap-4 mb-6">
+        <input id="archive-search" type="text" placeholder="Ism, familiya yoki telefon bo'yicha qidirish" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80">
+        <select id="archive-date-sort" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+          <option value="desc">Oxirgi sanadan boshlab</option>
+          <option value="asc">Birinchi sanadan boshlab</option>
+        </select>
+      </div>
+      <div id="archive-table" class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded-lg shadow">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ism-familiya</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mahsulot</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Miqdori</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Xona</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kiritilgan sana</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chiqarilgan sana</th>
+            </tr>
+          </thead>
+          <tbody id="archive-table-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="my-debts" class="tab-content hidden">
+      <div id="my-debts-table" class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded-lg shadow">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ism-familiya</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Summa</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sana</th>
+            </tr>
+          </thead>
+          <tbody id="my-debts-table-body" class="divide-y divide-gray-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="stats" class="tab-content hidden">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-lg font-medium text-gray-700 mb-2">Jami mijozlar</h3>
+          <p id="total-clients" class="text-2xl font-bold text-primary-600">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-lg font-medium text-gray-700 mb-2">Jami qarzdorlar</h3>
+          <p id="total-debtors" class="text-2xl font-bold text-primary-600">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-lg font-medium text-gray-700 mb-2">Jami mahsulot</h3>
+          <p id="total-products" class="text-2xl font-bold text-primary-600">0 kg</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="config" class="tab-content hidden">
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-6 text-gray-800">Sozlamalar</h2>
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Mahsulot turlari</label>
+            <div class="flex flex-wrap gap-4">
+              <input id="product-type-input" type="text" placeholder="Mahsulot turini kiriting" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80">
+              <button onclick="addProductType()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">Qo'shish</button>
+            </div>
+            <ul id="product-types-list" class="mt-4 space-y-2"></ul>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Xona sig'imlari</label>
+            <div class="flex flex-wrap gap-4">
+              <input id="room-number-input" type="text" placeholder="Xona raqami" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-40">
+              <input id="room-capacity-input" type="number" placeholder="Sig'im (kg)" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-40">
+              <button onclick="addRoom()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">Qo'shish</button>
+            </div>
+            <ul id="rooms-list" class="mt-4 space-y-2"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="add-client-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('add-client-modal')">×</span>
+        <h2 class="text-xl font-bold mb-6 text-gray-800">Yangi mijoz qo'shish</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+              <input id="client-firstname" type="text" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Ism kiriting">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+              <input id="client-lastname" type="text" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Familiya kiriting">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+              <input id="client-phone" type="tel" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="+998901234567">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Mahsulot turi</label>
+              <select id="client-product" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"></select>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Mahsulot navi</label>
+              <input id="client-variety" type="text" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Nav kiriting">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Miqdori (kg)</label>
+              <input id="client-quantity" type="number" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Miqdor kiriting">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Idish turi</label>
+              <input id="client-container-type" type="text" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Idish turi">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Idish soni</label>
+              <input id="client-container-count" type="number" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Idish soni">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Xona</label>
+              <select id="client-room" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"></select>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-6">
+          <button onclick="closeModal('add-client-modal')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition duration-200">Bekor qilish</button>
+          <button onclick="addClient()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">Saqlash</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="client-details-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('client-details-modal')">×</span>
+        <h2 class="text-xl font-bold mb-6 text-gray-800">Mijoz ma'lumotlari</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Ism-familiya:</div>
+              <div id="details-fullname" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Telefon:</div>
+              <div id="details-phone" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Mahsulot turi:</div>
+              <div id="details-product" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Mahsulot navi:</div>
+              <div id="details-variety" class="text-gray-800"></div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Miqdori:</div>
+              <div id="details-quantity" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Idish turi:</div>
+              <div id="details-container-type" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Idish soni:</div>
+              <div id="details-container-count" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Xona:</div>
+              <div id="details-room" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Kiritilgan sana:</div>
+              <div id="details-entry-date" class="text-gray-800"></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-6">
+          <button onclick="closeModal('client-details-modal')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition duration-200">Yopish</button>
+          <button onclick="deleteClient()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">O'chirish</button>
+          <button onclick="openBillingModal()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">Mahsulotni chiqarish</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="debtor-details-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('debtor-details-modal')">×</span>
+        <h2 class="text-xl font-bold mb-6 text-gray-800">Qarzdor ma'lumotlari</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Ism-familiya:</div>
+              <div id="debtor-fullname" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Telefon:</div>
+              <div id="debtor-phone" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Mahsulot turi:</div>
+              <div id="debtor-product" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Mahsulot navi:</div>
+              <div id="debtor-variety" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Qarz:</div>
+              <div id="debtor-debt" class="text-gray-800"></div>
+            </div>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Miqdori:</div>
+              <div id="debtor-quantity" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Idish turi:</div>
+              <div id="debtor-container-type" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Idish soni:</div>
+              <div id="debtor-container-count" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Xona:</div>
+              <div id="debtor-room" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Kiritilgan sana:</div>
+              <div id="debtor-entry-date" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Chiqarilgan sana:</div>
+              <div id="debtor-exit-date" class="text-gray-800"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6">
+          <label class="block text-sm font-medium text-gray-700 mb-1">To'lov miqdori</label>
+          <div class="flex flex-wrap gap-4">
+            <input id="payment-amount" type="number" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80" placeholder="To'lov miqdorini kiriting">
+            <button onclick="makePayment()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">To'lov qilish</button>
+          </div>
+        </div>
+        <div class="mt-6">
+          <h3 class="text-lg font-medium text-gray-700 mb-2">To'lovlar tarixi</h3>
+          <div id="payment-history" class="space-y-2"></div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-6">
+          <button onclick="closeModal('debtor-details-modal')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition duration-200">Yopish</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="billing-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('billing-modal')">×</span>
+        <h2 class="text-xl font-bold mb-6 text-gray-800">Hisob-kitob</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Kunlik narx (so'm/kg):</label>
+              <input id="billing-daily-rate" type="number" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="250">
+            </div>
+            
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Kiritilgan sana:</div>
+              <div id="billing-entry-date" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Chiqarish sanasi:</div>
+              <div id="billing-exit-date" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Saqlangan kun:</div>
+              <div id="billing-duration" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Mahsulot miqdori:</div>
+              <div id="billing-quantity" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Kunlik narx:</div>
+              <div id="billing-daily-rate-display" class="text-gray-800"></div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-36 text-gray-500 font-medium">Umumiy summa:</div>
+              <div id="billing-total" class="text-gray-800 font-bold"></div>
+            </div>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">To'lov turi:</label>
+              <div class="flex space-x-4 mt-1">
+                <label class="inline-flex items-center">
+                  <input type="radio" name="payment-type" value="Naqd" checked class="w-4 h-4 text-primary-600 focus:ring-primary-500" onchange="toggleInitialPaymentInput()">
+                  <span class="ml-2">Naqd</span>
+                </label>
+                <label class="inline-flex items-center">
+                  <input type="radio" name="payment-type" value="Qarzdor" class="w-4 h-4 text-primary-600 focus:ring-primary-500" onchange="toggleInitialPaymentInput()">
+                  <span class="ml-2">Qarzdor</span>
+                </label>
+              </div>
+            </div>
+            <div id="initial-payment-container" class="hidden">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Boshlang'ich to'lov (so'm):</label>
+              <input id="initial-payment" type="number" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" placeholder="Boshlang'ich to'lov miqdorini kiriting" oninput="updateRemainingDebt()">
+              <p id="remaining-debt" class="mt-2 text-gray-700"></p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 mt-6">
+          <button onclick="closeModal('billing-modal')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition duration-200">
+            Bekor qilish
+          </button>
+          <button onclick="exportToExcel()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <path d="M8 13h2"></path>
+              <path d="M8 17h2"></path>
+              <path d="M14 13h2"></path>
+              <path d="M14 17h2"></path>
+            </svg>
+            Excelda chiqarish
+          </button>
+          <button onclick="finalizeBilling()" class="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"></path>
+              <path d="m12 5 7 7-7 7"></path>
+            </svg>
+            Yakunlash
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CSS -->
+    <style>
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background-color: white;
+        padding: 24px;
+        border-radius: 8px;
+        max-width: 800px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+      }
+      .close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+      }
+      .close:hover {
+        color: #374151;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .tab-button.active {
+        border-bottom-color: #3b82f6;
+        color: #3b82f6;
+      }
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      th {
+        background-color: #f9fafb;
+        font-weight: 500;
+      }
+      tr:hover {
+        background-color: #f3f4f6;
+      }
+    </style>
+
+    <!-- JavaScript -->
+    <script>
+      const state = {
+        clients: [],
+        debtors: [],
+        archive: [],
+        myDebts: [],
+        productTypes: ["Go'sht", "Sut", "Meva", "Sabzavot"],
+        rooms: ["Xona 1", "Xona 2", "Xona 3"],
+        currentClientIndex: null,
+        currentDebtorIndex: null,
+      };
+
+      const storageConfig = {
+        roomOccupancy: { "Xona 1": 0, "Xona 2": 0, "Xona 3": 0 },
+        roomCapacities: { "Xona 1": 1000, "Xona 2": 1000, "Xona 3": 1000 },
+      };
+
+      function formatDate(date) {
+        if (!date) return "";
+        const d = new Date(date);
+        return `${d.getDate().toString().padStart(2, "0")}.${(d.getMonth() + 1).toString().padStart(2, "0")}.${d.getFullYear()}`;
+      }
+
+      function calculateDuration(entryDate) {
+        const entry = new Date(entryDate.split(".").reverse().join("-"));
+        const today = new Date();
+        const diffTime = Math.abs(today - entry);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      function showTab(tabId) {
+        document.querySelectorAll(".tab-content").forEach((tab) => tab.classList.remove("active"));
+        document.querySelectorAll(".tab-button").forEach((btn) => btn.classList.remove("active"));
+        document.getElementById(tabId).classList.add("active");
+        document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add("active");
+      }
+
+      function openModal(modalId) {
+        document.getElementById(modalId).style.display = "flex";
+      }
+
+      function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+      }
+
+      function updateElementText(updates) {
+        Object.entries(updates).forEach(([id, value]) => {
+          document.getElementById(id).textContent = value;
+        });
+      }
+
+      function addClient() {
+        const client = {
+          firstname: document.getElementById("client-firstname").value.trim(),
+          lastname: document.getElementById("client-lastname").value.trim(),
+          phone: document.getElementById("client-phone").value.trim(),
+          product: document.getElementById("client-product").value,
+          variety: document.getElementById("client-variety").value.trim(),
+          quantity: parseInt(document.getElementById("client-quantity").value) || 0,
+          containerType: document.getElementById("client-container-type").value.trim(),
+          containerCount: parseInt(document.getElementById("client-container-count").value) || 0,
+          room: document.getElementById("client-room").value,
+          entryDate: formatDate(new Date()),
+        };
+
+        if (!client.firstname || !client.lastname || !client.phone || !client.product || !client.quantity || !client.room) {
+          alert("Iltimos, barcha maydonlarni to'ldiring!");
+          return;
+        }
+
+        const availableCapacity = storageConfig.roomCapacities[client.room] - storageConfig.roomOccupancy[client.room];
+        if (client.quantity > availableCapacity) {
+          alert(`Xona ${client.room}da yetarli joy yo'q! Maksimal sig'im: ${availableCapacity} kg`);
+          return;
+        }
+
+        storageConfig.roomOccupancy[client.room] += client.quantity;
+        state.clients.push(client);
+        updateStats();
+        renderClients();
+        closeModal("add-client-modal");
+        document.querySelector("#add-client-modal form")?.reset();
+      }
+
+      function renderClients(filter = "") {
+        const tbody = document.getElementById("clients-table-body");
+        tbody.innerHTML = "";
+        state.clients
+          .filter((client) => {
+            const fullName = `${client.firstname} ${client.lastname}`.toLowerCase();
+            return fullName.includes(filter.toLowerCase()) || client.phone.includes(filter);
+          })
+          .forEach((client, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td class="px-6 py-4">${client.firstname} ${client.lastname}</td>
+              <td class="px-6 py-4">${client.phone}</td>
+              <td class="px-6 py-4">${client.product}</td>
+              <td class="px-6 py-4">${client.quantity} kg</td>
+              <td class="px-6 py-4">${client.room}</td>
+              <td class="px-6 py-4">${client.entryDate}</td>
+              <td class="px-6 py-4">
+                <button onclick="viewClientDetails(${index})" class="text-primary-600 hover:text-primary-800 mr-2">Ko'rish</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+      }
+
+      function viewClientDetails(index) {
+        state.currentClientIndex = index;
+        const client = state.clients[index];
+        updateElementText({
+          "details-fullname": `${client.firstname} ${client.lastname}`,
+          "details-phone": client.phone,
+          "details-product": client.product,
+          "details-variety": client.variety,
+          "details-quantity": `${client.quantity} kg`,
+          "details-container-type": client.containerType,
+          "details-container-count": client.containerCount,
+          "details-room": client.room,
+          "details-entry-date": client.entryDate,
+        });
+        openModal("client-details-modal");
+      }
+
+      function deleteClient() {
+        const client = state.clients[state.currentClientIndex];
+        storageConfig.roomOccupancy[client.room] -= client.quantity;
+        state.clients.splice(state.currentClientIndex, 1);
+        updateStats();
+        closeModal("client-details-modal");
+        renderClients();
+      }
+
+      function renderDebtors() {
+        const tbody = document.getElementById("debtors-table-body");
+        tbody.innerHTML = "";
+        state.debtors.forEach((debtor, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="px-6 py-4">${debtor.firstname} ${debtor.lastname}</td>
+            <td class="px-6 py-4">${debtor.phone}</td>
+            <td class="px-6 py-4">${debtor.debt.toLocaleString()} so'm</td>
+            <td class="px-6 py-4">
+              <button onclick="viewDebtorDetails(${index})" class="text-primary-600 hover:text-primary-800">Ko'rish</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function viewDebtorDetails(index) {
+        state.currentDebtorIndex = index;
+        const debtor = state.debtors[index];
+        updateElementText({
+          "debtor-fullname": `${debtor.firstname} ${debtor.lastname}`,
+          "debtor-phone": debtor.phone,
+          "debtor-product": debtor.product,
+          "debtor-variety": debtor.variety,
+          "debtor-debt": `${debtor.debt.toLocaleString()} so'm`,
+          "debtor-quantity": `${debtor.quantity} kg`,
+          "debtor-container-type": debtor.containerType,
+          "debtor-container-count": debtor.containerCount,
+          "debtor-room": debtor.room,
+          "debtor-entry-date": debtor.entryDate,
+          "debtor-exit-date": debtor.exitDate,
+        });
+
+        const paymentHistory = document.getElementById("payment-history");
+        paymentHistory.innerHTML = debtor.paymentHistory?.length
+          ? debtor.paymentHistory
+              .map((payment) => `<p>${payment.date}: ${payment.amount.toLocaleString()} so'm</p>`)
+              .join("")
+          : "<p>To'lovlar mavjud emas</p>";
+
+        openModal("debtor-details-modal");
+      }
+
+      function makePayment() {
+        const amount = parseInt(document.getElementById("payment-amount").value) || 0;
+        if (amount <= 0) {
+          alert("Iltimos, to'lov miqdorini kiriting!");
+          return;
+        }
+
+        const debtor = state.debtors[state現在のDebtorIndex];
+        debtor.debt -= amount;
+        debtor.paymentHistory = debtor.paymentHistory || [];
+        debtor.paymentHistory.push({ date: formatDate(new Date()), amount });
+
+        if (debtor.debt <= 0) {
+          state.myDebts.push({
+            firstname: debtor.firstname,
+            lastname: debtor.lastname,
+            phone: debtor.phone,
+            remaining: Math.abs(debtor.debt),
+            date: formatDate(new Date()),
+          });
+          state.debtors.splice(state.currentDebtorIndex, 1);
+        }
+
+        updateStats();
+        closeModal("debtor-details-modal");
+        renderDebtors();
+        renderMyDebts();
+      }
+
+      function renderMyDebts() {
+        const tbody = document.getElementById("my-debts-table-body");
+        tbody.innerHTML = "";
+        state.myDebts.forEach((debt) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="px-6 py-4">${debt.firstname} ${debt.lastname}</td>
+            <td class="px-6 py-4">${debt.phone}</td>
+            <td class="px-6 py-4">${debt.remaining.toLocaleString()} so'm</td>
+            <td class="px-6 py-4">${debt.date}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function renderArchive(filter = "", sortOrder = "desc") {
+        const tbody = document.getElementById("archive-table-body");
+        tbody.innerHTML = "";
+        state.archive
+          .filter((client) => {
+            const fullName = `${client.firstname} ${client.lastname}`.toLowerCase();
+            return fullName.includes(filter.toLowerCase()) || client.phone.includes(filter);
+          })
+          .sort((a, b) => {
+            const dateA = new Date(a.exitDate.split(".").reverse().join("-"));
+            const dateB = new Date(b.exitDate.split(".").reverse().join("-"));
+            return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+          })
+          .forEach((client) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td class="px-6 py-4">${client.firstname} ${client.lastname}</td>
+              <td class="px-6 py-4">${client.phone}</td>
+              <td class="px-6 py-4">${client.product}</td>
+              <td class="px-6 py-4">${client.quantity} kg</td>
+              <td class="px-6 py-4">${client.room}</td>
+              <td class="px-6 py-4">${client.entryDate}</td>
+              <td class="px-6 py-4">${client.exitDate}</td>
+            `;
+            tbody.appendChild(row);
+          });
+      }
+
+      function updateStats() {
+        const totalClients = state.clients.length;
+        const totalDebtors = state.debtors.length;
+        const totalProducts = state.clients.reduce((sum, client) => sum + client.quantity, 0);
+
+        updateElementText({
+          "total-clients": totalClients,
+          "total-debtors": totalDebtors,
+          "total-products": `${totalProducts} kg`,
+        });
+      }
+
+      function addProductType() {
+        const productType = document.getElementById("product-type-input").value.trim();
+        if (!productType) {
+          alert("Iltimos, mahsulot turini kiriting!");
+          return;
+        }
+        if (!state.productTypes.includes(productType)) {
+          state.productTypes.push(productType);
+          renderProductTypes();
+          renderProductTypeOptions();
+          document.getElementById("product-type-input").value = "";
+        }
+      }
+
+      function renderProductTypes() {
+        const list = document.getElementById("product-types-list");
+        list.innerHTML = "";
+        state.productTypes.forEach((type, index) => {
+          const li = document.createElement("li");
+          li.className = "flex items-center justify-between bg-gray-100 p-2 rounded";
+          li.innerHTML = `
+            <span>${type}</span>
+            <button onclick="deleteProductType(${index})" class="text-red-500 hover:text-red-700">O'chirish</button>
+          `;
+          list.appendChild(li);
+        });
+      }
+
+      function deleteProductType(index) {
+        state.productTypes.splice(index, 1);
+        renderProductTypes();
+        renderProductTypeOptions();
+      }
+
+      function addRoom() {
+        const roomNumber = document.getElementById("room-number-input").value.trim();
+        const capacity = parseInt(document.getElementById("room-capacity-input").value) || 0;
+
+        if (!roomNumber || capacity <= 0) {
+          alert("Iltimos, xona raqami va sig'imni kiriting!");
+          return;
+        }
+
+        if (!state.rooms.includes(roomNumber)) {
+          state.rooms.push(roomNumber);
+          storageConfig.roomCapacities[roomNumber] = capacity;
+          storageConfig.roomOccupancy[roomNumber] = 0;
+          renderRooms();
+          renderRoomOptions();
+          document.getElementById("room-number-input").value = "";
+          document.getElementById("room-capacity-input").value = "";
+        }
+      }
+
+      function renderRooms() {
+        const list = document.getElementById("rooms-list");
+        list.innerHTML = "";
+        state.rooms.forEach((room) => {
+          const li = document.createElement("li");
+          li.className = "flex items-center justify-between bg-gray-100 p-2 rounded";
+          li.innerHTML = `
+            <span>${room} (Sig'im: ${storageConfig.roomCapacities[room]} kg, Band: ${storageConfig.roomOccupancy[room]} kg)</span>
+            <button onclick="deleteRoom('${room}')" class="text-red-500 hover:text-red-700">O'chirish</button>
+          `;
+          list.appendChild(li);
+        });
+      }
+
+      function deleteRoom(room) {
+        if (storageConfig.roomOccupancy[room] > 0) {
+          alert("Bu xonada mahsulot bor, o'chirib bo'lmaydi!");
+          return;
+        }
+        state.rooms = state.rooms.filter((r) => r !== room);
+        delete storageConfig.roomCapacities[room];
+        delete storageConfig.roomOccupancy[room];
+        renderRooms();
+        renderRoomOptions();
+      }
+
+      function renderProductTypeOptions() {
+        const select = document.getElementById("client-product");
+        select.innerHTML = state.productTypes.map((type) => `<option value="${type}">${type}</option>`).join("");
+      }
+
+      function renderRoomOptions() {
+        const select = document.getElementById("client-room");
+        select.innerHTML = state.rooms.map((room) => `<option value="${room}">${room}</option>`).join("");
+      }
+
+      function toggleInitialPaymentInput() {
+        const paymentType = document.querySelector("input[name='payment-type']:checked").value;
+        const initialPaymentContainer = document.getElementById("initial-payment-container");
+        initialPaymentContainer.classList.toggle("hidden", paymentType !== "Qarzdor");
+        if (paymentType === "Qarzdor") {
+          document.getElementById("initial-payment").value = "";
+          updateRemainingDebt();
+        } else {
+          document.getElementById("remaining-debt").textContent = "";
+        }
+      }
+
+      function updateRemainingDebt() {
+        const client = state.clients[state.currentClientIndex];
+        const dailyRate = parseInt(document.getElementById("billing-daily-rate").value) || 0;
+        const duration = calculateDuration(client.entryDate);
+        const total = dailyRate * duration * client.quantity;
+        const initialPayment = parseInt(document.getElementById("initial-payment").value) || 0;
+        const remainingDebt = total - initialPayment;
+
+        const remainingDebtElement = document.getElementById("remaining-debt");
+        if (initialPayment > 0) {
+          if (remainingDebt > 0) {
+            remainingDebtElement.textContent = `Qoldiq qarz: ${remainingDebt.toLocaleString()} so'm`;
+            remainingDebtElement.classList.remove("text-green-500");
+            remainingDebtElement.classList.add("text-red-500");
+          } else if (remainingDebt === 0) {
+            remainingDebtElement.textContent = "Naqd savdo qilgan yaxshi";
+            remainingDebtElement.classList.remove("text-red-500");
+            remainingDebtElement.classList.add("text-green-500");
+          } else {
+            remainingDebtElement.textContent = `Ortgan summa: ${Math.abs(remainingDebt).toLocaleString()} so'm`;
+            remainingDebtElement.classList.remove("text-red-500");
+            remainingDebtElement.classList.add("text-green-500");
+          }
+        } else {
+          remainingDebtElement.textContent = `Qarzdorlik: ${total.toLocaleString()} so'm`;
+          remainingDebtElement.classList.remove("text-green-500");
+          remainingDebtElement.classList.add("text-red-500");
+        }
+      }
+
+      function finalizeBilling() {
+        const client = state.clients[state.currentClientIndex];
+        const dailyRate = parseInt(document.getElementById("billing-daily-rate").value) || 0;
+        const duration = calculateDuration(client.entryDate);
+        const total = dailyRate * duration * client.quantity;
+        const paymentType = document.querySelector("input[name='payment-type']:checked").value;
+        const initialPayment = parseInt(document.getElementById("initial-payment").value) || 0;
+        const today = formatDate(new Date());
+
+        client.exitDate = formatDate(new Date());
+        storageConfig.roomOccupancy[client.room] -= client.quantity;
+
+        if (paymentType === "Qarzdor") {
+          const remainingDebt = total - initialPayment;
+          if (remainingDebt > 0) {
+            client.debt = remainingDebt;
+            client.dailyRate = dailyRate;
+            client.paymentHistory = initialPayment > 0 ? [{ date: today, amount: initialPayment }] : [];
+            state.debtors.push(client);
+          } else if (remainingDebt === 0) {
+            alert("Naqd savdo qilgan yaxshi");
+          } else {
+            state.myDebts.push({
+              firstname: client.firstname,
+              lastname: client.lastname,
+              phone: client.phone,
+              remaining: Math.abs(remainingDebt),
+              date: today,
+            });
+          }
+        }
+
+        state.clients.splice(state.currentClientIndex, 1);
+        state.archive.push({ ...client });
+        updateStats();
+        closeModal("billing-modal");
+        closeModal("client-details-modal");
+        renderClients();
+        renderDebtors();
+        renderMyDebts();
+      }
+
+      function openBillingModal() {
+        const client = state.clients[state.currentClientIndex];
+        const duration = calculateDuration(client.entryDate);
+        const modal = document.getElementById("billing-modal");
+
+        updateElementText({
+          "billing-entry-date": client.entryDate,
+          "billing-exit-date": formatDate(new Date()),
+          "billing-duration": `${duration} kun`,
+          "billing-quantity": `${client.quantity} kg`,
+        });
+
+        const dailyRateInput = document.getElementById("billing-daily-rate");
+        dailyRateInput.value = "250"; // Default value
+        dailyRateInput.oninput = () => {
+          const dailyRate = parseInt(dailyRateInput.value) || 0;
+          updateElementText({
+            "billing-daily-rate-display": `${dailyRate.toLocaleString()} so'm/kg`,
+            "billing-total": `${(dailyRate * duration * client.quantity).toLocaleString()} so'm`,
+          });
+          updateRemainingDebt();
+        };
+
+        toggleInitialPaymentInput();
+        dailyRateInput.dispatchEvent(new Event('input'));
+
+        modal.style.display = "flex";
+      }
+
+      function exportToExcel() {
+        const client = state.clients[state.currentClientIndex];
+        const dailyRate = parseInt(document.getElementById("billing-daily-rate").value) || 0;
+        const duration = calculateDuration(client.entryDate);
+        const total = dailyRate * duration * client.quantity;
+        const paymentType = document.querySelector("input[name='payment-type']:checked").value;
+        const initialPayment = parseInt(document.getElementById("initial-payment").value) || 0;
+        const remainingDebt = total - initialPayment;
+
+        const data = [
+          {
+            "Ism-familiya": `${client.firstname} ${client.lastname}`,
+            "Telefon": client.phone,
+            "Mahsulot nomi": client.product,
+            "Mahsulot navi": client.variety,
+            "Miqdori (kg)": client.quantity,
+            "Idish turi": client.containerType,
+            "Idish soni": client.containerCount,
+            "Xona": client.room,
+            "Kiritilgan sana": client.entryDate,
+            "Chiqarilgan sana": formatDate(new Date()),
+            "Saqlangan kun": duration,
+            "Kunlik narx (so'm/kg)": dailyRate,
+            "Umumiy summa (so'm)": total,
+            "To'lov turi": paymentType,
+            "Boshlang'ich to'lov (so'm)": initialPayment,
+            "Qoldiq qarz (so'm)": paymentType === "Qarzdor" ? remainingDebt : 0,
+          },
+        ];
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Hisob-kitob");
+        XLSX.writeFile(wb, `${client.firstname}_${client.lastname}_hisob_kitob.xlsx`);
+      }
+
+      // Event Listeners
+      document.getElementById("client-search").addEventListener("input", (e) => {
+        renderClients(e.target.value);
+      });
+
+      document.getElementById("archive-search").addEventListener("input", (e) => {
+        renderArchive(e.target.value, document.getElementById("archive-date-sort").value);
+      });
+
+      document.getElementById("archive-date-sort").addEventListener("change", (e) => {
+        renderArchive(document.getElementById("archive-search").value, e.target.value);
+      });
+
+      // Initial Render
+      renderProductTypes();
+      renderRooms();
+      renderProductTypeOptions();
+      renderRoomOptions();
+      renderClients();
+      renderDebtors();
+      renderArchive();
+      renderMyDebts();
+      updateStats();
+      showTab("clients");
+    </script>
+  </body>
+</html>
